@@ -4,6 +4,7 @@ import sys
 from PyQt6.QtCore import Qt, pyqtSignal, QEasingCurve, QUrl
 from PyQt6.QtGui import QIcon, QDesktopServices
 from PyQt6.QtWidgets import QLabel, QHBoxLayout, QVBoxLayout, QApplication, QFrame, QWidget
+from chat_face import ChatInterface  # 添加导入语句
 
 from qfluentwidgets import (NavigationBar, NavigationItemPosition, NavigationWidget, MessageBox,
                             isDarkTheme, setTheme, Theme, setThemeColor, SearchLineEdit,
@@ -123,25 +124,28 @@ class Window(FramelessWindow):
         # change the theme color
         # setThemeColor('#0078d4')
 
+        # 初始化布局和组件
         self.hBoxLayout = QHBoxLayout(self)
         self.navigationBar = NavigationBar(self)
         self.stackWidget = StackedWidget(self)
 
+        # 初始化布局
+        self.initLayout()
+
         # create sub interface
-        self.homeInterface = Widget('Home Interface', self)
         self.appInterface = Widget('Application Interface', self)
         self.videoInterface = Widget('Video Interface', self)
         self.libraryInterface = Widget('library Interface', self)
+        self.chatInterface = ChatInterface(self)
 
-        # initialize layout
-        self.initLayout()
-
-        # add items to navigation interface
+        # 初始化导航
         self.initNavigation()
-
+        
+        # 初始化窗口
         self.initWindow()
 
     def initLayout(self):
+        """初始化布局"""
         self.hBoxLayout.setSpacing(0)
         self.hBoxLayout.setContentsMargins(0, 48, 0, 0)
         self.hBoxLayout.addWidget(self.navigationBar)
@@ -149,11 +153,15 @@ class Window(FramelessWindow):
         self.hBoxLayout.setStretchFactor(self.stackWidget, 1)
 
     def initNavigation(self):
-        self.addSubInterface(self.homeInterface, FIF.HOME, '主页', selectedIcon=FIF.HOME_FILL)
+        """初始化导航栏"""
+        # 添加主要界面
+        self.addSubInterface(self.chatInterface, FIF.HOME, '主页', selectedIcon=FIF.HOME_FILL)
         self.addSubInterface(self.appInterface, FIF.APPLICATION, '应用')
         self.addSubInterface(self.videoInterface, FIF.VIDEO, '视频')
-
-        self.addSubInterface(self.libraryInterface, FIF.BOOK_SHELF, '库', NavigationItemPosition.BOTTOM, FIF.LIBRARY_FILL)
+        
+        # 添加底部界面
+        self.addSubInterface(self.libraryInterface, FIF.BOOK_SHELF, '库', 
+                           NavigationItemPosition.BOTTOM, FIF.LIBRARY_FILL)
         self.navigationBar.addItem(
             routeKey='Help',
             icon=FIF.HELP,
@@ -163,8 +171,9 @@ class Window(FramelessWindow):
             position=NavigationItemPosition.BOTTOM,
         )
 
+        # 连接信号
         self.stackWidget.currentChanged.connect(self.onCurrentInterfaceChanged)
-        self.navigationBar.setCurrentItem(self.homeInterface.objectName())
+        self.navigationBar.setCurrentItem(self.chatInterface.objectName())  # 设置聊天界面为默认显示页面
 
         # hide the text of button when selected
         # self.navigationBar.setSelectedTextVisible(False)
