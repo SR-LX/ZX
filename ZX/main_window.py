@@ -3,7 +3,7 @@ import sys
 
 from PyQt6.QtCore import Qt, pyqtSignal, QEasingCurve, QUrl
 from PyQt6.QtGui import QIcon, QDesktopServices
-from PyQt6.QtWidgets import QLabel, QHBoxLayout, QVBoxLayout, QApplication, QFrame, QWidget
+from PyQt6.QtWidgets import QLabel, QHBoxLayout, QVBoxLayout, QApplication, QFrame, QWidget, QFileDialog
 from chat_face import ChatInterface  # 添加导入语句
 
 from qfluentwidgets import (NavigationBar, NavigationItemPosition, NavigationWidget, MessageBox,
@@ -11,6 +11,10 @@ from qfluentwidgets import (NavigationBar, NavigationItemPosition, NavigationWid
                             PopUpAniStackedWidget, getFont)
 from qfluentwidgets import FluentIcon as FIF
 from qframelesswindow import FramelessWindow, TitleBar
+from ntp_interface import NTPInterface
+import os
+import sys
+
 
 
 class Widget(QWidget):
@@ -112,31 +116,44 @@ class CustomTitleBar(TitleBar):
 
 
 
+# 在文件开头添加导入
+
 class Window(FramelessWindow):
 
+
+    def setQss(self):
+        def resource_path(relative_path):
+            if hasattr(sys, '_MEIPASS'):
+                return os.path.join(sys._MEIPASS, relative_path)
+            return os.path.join(os.path.abspath('.'), relative_path)
+        
+        color = 'dark' if isDarkTheme() else 'light'
+        qss_path = resource_path(f'resource/{color}/demo.qss')
+        try:
+            with open(qss_path, encoding='utf-8') as f:
+                self.setStyleSheet(f.read())
+        except FileNotFoundError:
+            print(f"找不到样式文件：{qss_path}")
+            # 添加更详细的错误信息
+            print(f"当前目录: {os.getcwd()}")
+            print(f"MEIPASS路径: {getattr(sys, '_MEIPASS', '不存在')}")
     def __init__(self):
         super().__init__()
         self.setTitleBar(CustomTitleBar(self))
-
-        # use dark theme mode
-        # setTheme(Theme.DARK)
-
-        # change the theme color
-        # setThemeColor('#0078d4')
 
         # 初始化布局和组件
         self.hBoxLayout = QHBoxLayout(self)
         self.navigationBar = NavigationBar(self)
         self.stackWidget = StackedWidget(self)
 
-        # 初始化布局
-        self.initLayout()
-
         # create sub interface
-        self.appInterface = Widget('Application Interface', self)
+        self.ntpInterface = NTPInterface(self)
         self.videoInterface = Widget('Video Interface', self)
         self.libraryInterface = Widget('library Interface', self)
         self.chatInterface = ChatInterface(self)
+
+        # 初始化布局
+        self.initLayout()
 
         # 初始化导航
         self.initNavigation()
@@ -151,12 +168,11 @@ class Window(FramelessWindow):
         self.hBoxLayout.addWidget(self.navigationBar)
         self.hBoxLayout.addWidget(self.stackWidget)
         self.hBoxLayout.setStretchFactor(self.stackWidget, 1)
-
     def initNavigation(self):
         """初始化导航栏"""
         # 添加主要界面
         self.addSubInterface(self.chatInterface, FIF.HOME, '主页', selectedIcon=FIF.HOME_FILL)
-        self.addSubInterface(self.appInterface, FIF.APPLICATION, '应用')
+        self.addSubInterface(self.ntpInterface, FIF.DATE_TIME, 'NTP时间')  # 使用 DATE_TIME 图标
         self.addSubInterface(self.videoInterface, FIF.VIDEO, '视频')
         
         # 添加底部界面
@@ -204,11 +220,6 @@ class Window(FramelessWindow):
             selectedIcon=selectedIcon,
             position=position,
         )
-
-    def setQss(self):
-        color = 'dark' if isDarkTheme() else 'light'
-        with open(f'resource/{color}/demo.qss', encoding='utf-8') as f:
-            self.setStyleSheet(f.read())
 
     def switchTo(self, widget):
         self.stackWidget.setCurrentWidget(widget)
